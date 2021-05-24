@@ -1,6 +1,6 @@
 from django.shortcuts import render,redirect
 
-from .models import Topic
+from .models import Topic, Entry
 from .forms import TopicForm, EntryForm
 
 # Create your views here.
@@ -39,7 +39,7 @@ def new_topic(request):
     return render(request, 'learning_logs/new_topic.html', context)
 
 def new_entry(request, topic_id):
-    """在特定主体中添加新条目"""
+    """在特定主题中添加新条目。"""
     topic = Topic.objects.get(id = topic_id)
 
     if request.method != 'POST':
@@ -47,7 +47,7 @@ def new_entry(request, topic_id):
         form= EntryForm()
     else:
         # Post提交的数据：对数据进行处理
-        form = TopicForm(data=request.POST)
+        form = EntryForm(data=request.POST)
         if form.is_valid():
             new_entry = form.save(commit=False)
             new_entry.topic = topic
@@ -57,6 +57,23 @@ def new_entry(request, topic_id):
     context = {'topic':topic, 'form': form}
     return render(request, 'learning_logs/new_entry.html', context)
 
+def edit_entry(request,entry_id):
+    """编辑既有条目。"""
+    entry = Entry.objects.get(id = entry_id)
+    topic = entry.topic
+
+    if request.method != 'POST':
+        #初次请求：使用当前条目填充表单。
+        form = EntryForm(instance = entry)
+    else:
+        #POST提交的数据：对数据进行处理。
+        form = EntryForm(instance=entry,data = request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('learning_logs:topic',topic_id = topic.id)
+
+    context = {'entry':entry, 'topic':topic, 'form':form}
+    return render(request,'learning_logs/edit_entry.html',context)
 
 
 
